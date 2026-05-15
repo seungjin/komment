@@ -4,7 +4,7 @@ set shell := ["bash", "-c"]
 build:
     wasm-pack build --target web
     mkdir -p public
-    cp index.html sample.html public/
+    cp index.html public/
     cp -r pkg public/
 
 # Run the project locally
