@@ -17,7 +17,7 @@ To build this project, you need:
 
 - [Rust](https://www.rust-lang.org/tools/install) (2024 edition)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
-- A web server to serve the static files (e.g., `python3 -m http.server`, `npx serve`, etc.)
+- A web server to serve the static files (e.g., [miniserve](https://github.com/svenstaro/miniserve), `npx serve`, etc.)
 
 ## Getting Started
 
@@ -43,8 +43,8 @@ This will create a `pkg/` directory in your project root.
 Start a local web server to view the `index.html` file.
 
 ```bash
-# Using Python
-python3 -m http.server 8000
+# Using miniserve
+miniserve . -p 8000 --index index.html
 ```
 
 Open your browser and navigate to `http://localhost:8000`.
