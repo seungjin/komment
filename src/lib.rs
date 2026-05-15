@@ -12,25 +12,36 @@ extern "C" {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct KommentConfig {
     pub repo: String,
-    pub repo_id: String,
-    pub category: String,
-    pub category_id: String,
+    pub repo_id: Option<String>,
+    pub category: Option<String>,
+    pub category_id: Option<String>,
     pub mapping: String,
     pub term: String,
     pub token: Option<String>,
     pub api_url: Option<String>,
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct DiscussionResponse {
-    pub data: DiscussionData,
+    pub data: Option<DiscussionData>,
+    pub errors: Option<Vec<GithubError>>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GithubError {
+    pub message: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct DiscussionData {
     pub repository: Option<RepositoryData>,
     pub search: Option<SearchData>,
+    pub viewer: Option<ViewerData>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ViewerData {
+    pub login: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -68,6 +79,8 @@ pub struct Comment {
     pub author: Author,
     #[serde(rename = "bodyHTML")]
     pub body_html: String,
+    #[serde(rename = "body")]
+    pub body: String,
     #[serde(rename = "createdAt")]
     pub created_at: String,
 }
@@ -98,6 +111,7 @@ impl Komment {
         let query = match self.config.mapping.as_str() {
             "number" => format!(
                 r#"query {{
+                    viewer {{ login }}
                     repository(owner: "{owner}", name: "{name}") {{
                         discussion(number: {number}) {{
                             id
@@ -111,6 +125,7 @@ impl Komment {
                                         avatarUrl
                                     }}
                                     bodyHTML
+                                    body
                                     createdAt
                                 }}
                             }}
@@ -123,6 +138,7 @@ impl Komment {
             ),
             _ => format!(
                 r#"query {{
+                    viewer {{ login }}
                     search(query: "repo:{owner}/{name} is:discussion \"{term}\"", type: DISCUSSION, first: 1) {{
                         edges {{
                             node {{
@@ -138,6 +154,7 @@ impl Komment {
                                                 avatarUrl
                                             }}
                                             bodyHTML
+                                            body
                                             createdAt
                                         }}
                                     }}
@@ -152,6 +169,58 @@ impl Komment {
             ),
         };
 
+        self.execute_graphql(query).await
+    }
+
+    pub async fn create_discussion(&self, repo_owner: String, repo_name: String, category_name: String, title: String, body: String) -> Result<JsValue, JsValue> {
+        let query_ids = format!(
+            r#"query {{
+                repository(owner: "{repo_owner}", name: "{repo_name}") {{
+                    id
+                    discussionCategories(first: 10) {{
+                        nodes {{
+                            id
+                            name
+                        }}
+                    }}
+                }}
+            }}"#,
+            repo_owner = repo_owner,
+            repo_name = repo_name
+        );
+
+        let ids_resp = self.execute_graphql(query_ids).await?;
+        let ids_data: serde_json::Value = serde_wasm_bindgen::from_value(ids_resp)?;
+        
+        let repo_id = ids_data["data"]["repository"]["id"].as_str()
+            .ok_or("Could not find repository ID")?;
+            
+        let category_id = ids_data["data"]["repository"]["discussionCategories"]["nodes"]
+            .as_array()
+            .ok_or("Could not find categories")?
+            .iter()
+            .find(|c| c["name"].as_str().map(|n| n.to_lowercase()) == Some(category_name.to_lowercase()))
+            .and_then(|c| c["id"].as_str())
+            .ok_or_else(|| format!("Category '{}' not found", category_name))?;
+
+        let mutation = format!(
+            r#"mutation {{
+                createDiscussion(input: {{repositoryId: "{repo_id}", categoryId: "{category_id}", title: "{title}", body: "{body}"}}) {{
+                    discussion {{
+                        id
+                    }}
+                }}
+            }}"#,
+            repo_id = repo_id,
+            category_id = category_id,
+            title = title.replace('"', "\\\""),
+            body = body.replace('"', "\\\"")
+        );
+
+        self.execute_graphql(mutation).await
+    }
+
+    async fn execute_graphql(&self, query: String) -> Result<JsValue, JsValue> {
         let opts = RequestInit::new();
         opts.set_method("POST");
         opts.set_mode(RequestMode::Cors);
@@ -176,8 +245,65 @@ impl Komment {
             return Err(JsValue::from_str(&format!("HTTP error: {}", resp.status())));
         }
 
-        let json = JsFuture::from(resp.json()?).await?;
-        Ok(json)
+        let json_value = JsFuture::from(resp.json()?).await?;
+        let json_serde: serde_json::Value = serde_wasm_bindgen::from_value(json_value.clone())?;
+
+        // Check for GraphQL errors
+        if let Some(errors) = json_serde["errors"].as_array() {
+            if !errors.is_empty() {
+                let msg = errors[0]["message"].as_str().unwrap_or("Unknown GraphQL error");
+                return Err(JsValue::from_str(&format!("GitHub API Error: {}", msg)));
+            }
+        }
+
+        Ok(json_value)
+    }
+
+    pub async fn post_comment(&self, discussion_id: String, body: String) -> Result<JsValue, JsValue> {
+        let query = format!(
+            r#"mutation {{
+                addDiscussionComment(input: {{discussionId: "{discussion_id}", body: "{body}"}}) {{
+                    comment {{
+                        id
+                    }}
+                }}
+            }}"#,
+            discussion_id = discussion_id,
+            body = body.replace('"', "\\\"").replace('\n', "\\n")
+        );
+
+        self.execute_graphql(query).await
+    }
+
+    pub async fn delete_comment(&self, comment_id: String) -> Result<JsValue, JsValue> {
+        let query = format!(
+            r#"mutation {{
+                deleteDiscussionComment(input: {{id: "{comment_id}"}}) {{
+                    comment {{
+                        id
+                    }}
+                }}
+            }}"#,
+            comment_id = comment_id
+        );
+
+        self.execute_graphql(query).await
+    }
+
+    pub async fn update_comment(&self, comment_id: String, body: String) -> Result<JsValue, JsValue> {
+        let query = format!(
+            r#"mutation {{
+                updateDiscussionComment(input: {{commentId: "{comment_id}", body: "{body}"}}) {{
+                    comment {{
+                        id
+                    }}
+                }}
+            }}"#,
+            comment_id = comment_id,
+            body = body.replace('"', "\\\"").replace('\n', "\\n")
+        );
+
+        self.execute_graphql(query).await
     }
 
     pub fn render(&self, element_id: &str, data: JsValue) -> Result<(), JsValue> {
@@ -187,15 +313,27 @@ impl Komment {
         let document = window.document().ok_or("No document found")?;
         let container = document.get_element_by_id(element_id).ok_or("Element not found")?;
 
-        let discussion = if let Some(repo) = response.data.repository {
+        // Note: errors are now caught in execute_graphql, but we keep this for safety
+        if let Some(errors) = response.errors {
+            if !errors.is_empty() {
+                return Err(JsValue::from_str(&format!("GitHub API Error: {}", errors[0].message)));
+            }
+        }
+
+        let data = response.data.ok_or("No data in response")?;
+        let viewer_login = data.viewer.as_ref().map(|v| v.login.as_str());
+
+        let discussion = if let Some(repo) = data.repository {
             repo.discussion
-        } else if let Some(search) = response.data.search {
+        } else if let Some(search) = data.search {
             search.edges.first().and_then(|e| e.node.clone())
         } else {
             None
         };
 
-        let discussion = discussion.ok_or("Discussion not found")?;
+        let discussion = discussion.ok_or("DISCUSSION_NOT_FOUND")?;
+
+        container.set_attribute("data-discussion-id", &discussion.id)?;
 
         let mut html = format!(
             r#"<div class="komment-discussion">
@@ -206,19 +344,64 @@ impl Komment {
         );
 
         for comment in discussion.comments.nodes {
+            let is_author = viewer_login == Some(&comment.author.login);
+            
             html.push_str(&format!(
-                r#"<div class="komment-comment">
+                r#"<div class="komment-comment" id="comment-{id}">
                     <div class="komment-comment-header">
-                        <img src="{}" width="30" height="30" />
-                        <strong>{}</strong> at {}
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="{avatar}" width="30" height="30" />
+                            <strong>{author}</strong> at {date}
+                        </div>
+                        {actions}
                     </div>
-                    <div class="komment-comment-body">{}</div>
+                    <div class="komment-comment-body" id="body-{id}">{body_html}</div>
+                    <div class="komment-comment-edit" id="edit-form-{id}" style="display:none; padding:16px;">
+                        <textarea id="textarea-{id}" style="width:100%; min-height:80px; margin-bottom:10px;">{body_raw}</textarea>
+                        <div style="display:flex; gap:10px;">
+                            <button class="komment-save-btn" data-id="{id}">Save</button>
+                            <button class="komment-cancel-btn" data-id="{id}">Cancel</button>
+                        </div>
+                    </div>
                 </div>"#,
-                comment.author.avatar_url, comment.author.login, comment.created_at, comment.body_html
+                id = comment.id,
+                author = comment.author.login,
+                avatar = comment.author.avatar_url,
+                date = comment.created_at,
+                body_html = comment.body_html,
+                body_raw = comment.body.replace('"', "&quot;"),
+                actions = if is_author {
+                    format!(
+                        r#"<div class="komment-actions">
+                            <button class="komment-edit-btn" data-id="{id}">Edit</button>
+                            <button class="komment-delete-btn" data-id="{id}">Delete</button>
+                        </div>"#,
+                        id = comment.id
+                    )
+                } else {
+                    "".to_string()
+                }
             ));
         }
 
-        html.push_str("</div></div>");
+        html.push_str("</div>");
+
+        if self.config.token.is_some() {
+            html.push_str(r#"
+                <div class="komment-editor">
+                    <textarea id="komment-textarea" placeholder="Leave a comment..."></textarea>
+                    <div style="display:flex; gap:10px;">
+                        <button id="logout-btn-inline" class="komment-logout-btn">
+                            <svg height="16" viewBox="0 0 16 16" width="16" style="fill:currentColor;"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.31-1.23-.64-1.48 2.05-.23 4.2-.61 4.2-4.13 0-.91-.32-1.65-.84-2.24.08-.21.36-1.07-.08-2.21 0 0-.7-.23-2.29.86-.66-.18-1.37-.27-2.07-.27-.69 0-1.4.09-2.07.27-1.59-1.09-2.29-.86-2.29-.86-.44 1.14-.16 2-.08 2.21-.52.59-.84 1.33-.84 2.24 0 3.51 2.15 3.89 4.2 4.13-.26.21-.51.59-.59.91-.4.18-1.44.49-2.07-.59-.14-.24-.4-.44-.68-.48-.28-.04-.42.01-.1.08.2.06.41.29.54.52.19.34.18.96.48 1.16.2.14.71.1 1.05.07.01.67.01 1.3.01 1.48 0 .21-.15.46-.55.38A8.013 8.013 0 0 1 0 8c0-4.42 3.58-8 8-8z"></path></svg>
+                            Logout
+                        </button>
+                        <button id="komment-submit">Post Comment</button>
+                    </div>
+                </div>
+            "#);
+        }
+
+        html.push_str("</div>");
 
         container.set_inner_html(&html);
 

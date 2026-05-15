@@ -24,9 +24,9 @@ struct GraphQLRequest {
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     // 1. Handle CORS Preflight
     let cors = Cors::default()
-        .with_origins(vec!["*"]) // In production, replace with your specific domain
+        .with_origins(vec!["*"])
         .with_methods(vec![Method::Post, Method::Options])
-        .with_headers(vec!["Content-Type", "Authorization"]);
+        .with_allowed_headers(vec!["Content-Type", "Authorization"]);
 
     if req.method() == Method::Options {
         return Response::empty()?.with_cors(&cors);
@@ -35,7 +35,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     let router = Router::new();
 
     router
-        // Endpoint to exchange OAuth code for a token
         .post_async("/api/token", |mut req, ctx| async move {
             let data: TokenRequest = req.json().await?;
             let client_id = ctx.env.var("GITHUB_CLIENT_ID")?.to_string();
@@ -57,9 +56,8 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let body = res.text().await.map_err(|e| worker::Error::from(e.to_string()))?;
             Response::ok(body)
         })
-        // Proxy endpoint for GraphQL requests
-        .post_async("/api/graphql", |mut req, ctx| async move {
-            let token = req.headers().get("Authorization")?.ok_or("Missing Authorization header")?;
+        .post_async("/api/graphql", |mut req, _ctx| async move {
+            let token = req.headers().get("Authorization")?.ok_or("Unauthorized: Missing Authorization header")?;
             let graphql_body: GraphQLRequest = req.json().await?;
 
             let client = reqwest::Client::new();

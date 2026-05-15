@@ -2,18 +2,20 @@ set shell := ["bash", "-c"]
 
 # Build the WASM package and prepare assets
 build:
-    wasm-pack build --target web
-    mkdir -p public
-    cp index.html public/
-    cp -r pkg public/
+	wasm-pack build --target web
+	mkdir -p public/foo
+	cp index.html public/
+	cp foo.html public/foo/foo.html
+	cp komment-embed.js public/
+	cp -r pkg public/
 
 # Run the project locally
 dev: build
-    npx wrangler dev
+	cd worker && npx wrangler dev
 
 # Deploy to Cloudflare
 deploy: build
-    npx wrangler deploy
+	cd worker && npx wrangler deploy
 
 # Clean build artifacts
 clean:
