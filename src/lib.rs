@@ -106,6 +106,10 @@ impl Komment {
     }
 
     pub async fn fetch_discussion(&self) -> Result<JsValue, JsValue> {
+        if self.config.token.is_none() {
+            return Err(JsValue::from_str("401 Unauthorized: Please login to view comments"));
+        }
+
         let (owner, name) = self.config.repo.split_once('/').ok_or("Invalid repo format")?;
         
         let query = match self.config.mapping.as_str() {
@@ -205,7 +209,7 @@ impl Komment {
 
         let mutation = format!(
             r#"mutation {{
-                createDiscussion(input: {{repositoryId: "{repo_id}", categoryId: "{category_id}", title: "{title}", body: "{body}"}}) {{
+                createDiscussion(input: {{repositoryId: "{repo_id}", categoryId: "{category_id}", title: {title}, body: {body}}}) {{
                     discussion {{
                         id
                     }}
@@ -213,8 +217,8 @@ impl Komment {
             }}"#,
             repo_id = repo_id,
             category_id = category_id,
-            title = title.replace('"', "\\\""),
-            body = body.replace('"', "\\\"")
+            title = serde_json::to_string(&title).unwrap_or_else(|_| format!("\"{}\"", title.replace('"', "\\\""))),
+            body = serde_json::to_string(&body).unwrap_or_else(|_| format!("\"{}\"", body.replace('"', "\\\"")))
         );
 
         self.execute_graphql(mutation).await
@@ -262,14 +266,14 @@ impl Komment {
     pub async fn post_comment(&self, discussion_id: String, body: String) -> Result<JsValue, JsValue> {
         let query = format!(
             r#"mutation {{
-                addDiscussionComment(input: {{discussionId: "{discussion_id}", body: "{body}"}}) {{
+                addDiscussionComment(input: {{discussionId: "{discussion_id}", body: {body}}}) {{
                     comment {{
                         id
                     }}
                 }}
             }}"#,
             discussion_id = discussion_id,
-            body = body.replace('"', "\\\"").replace('\n', "\\n")
+            body = serde_json::to_string(&body).unwrap_or_else(|_| format!("\"{}\"", body.replace('"', "\\\"").replace('\n', "\\n")))
         );
 
         self.execute_graphql(query).await
@@ -293,14 +297,14 @@ impl Komment {
     pub async fn update_comment(&self, comment_id: String, body: String) -> Result<JsValue, JsValue> {
         let query = format!(
             r#"mutation {{
-                updateDiscussionComment(input: {{commentId: "{comment_id}", body: "{body}"}}) {{
+                updateDiscussionComment(input: {{commentId: "{comment_id}", body: {body}}}) {{
                     comment {{
                         id
                     }}
                 }}
             }}"#,
             comment_id = comment_id,
-            body = body.replace('"', "\\\"").replace('\n', "\\n")
+            body = serde_json::to_string(&body).unwrap_or_else(|_| format!("\"{}\"", body.replace('"', "\\\"").replace('\n', "\\n")))
         );
 
         self.execute_graphql(query).await

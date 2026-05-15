@@ -57,7 +57,10 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             Response::ok(body)
         })
         .post_async("/api/graphql", |mut req, _ctx| async move {
-            let token = req.headers().get("Authorization")?.ok_or("Unauthorized: Missing Authorization header")?;
+            let token = match req.headers().get("Authorization")? {
+                Some(t) => t,
+                None => return Response::error("Unauthorized: Missing Authorization header", 401),
+            };
             let graphql_body: GraphQLRequest = req.json().await?;
 
             let client = reqwest::Client::new();
