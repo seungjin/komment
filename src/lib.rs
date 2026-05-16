@@ -347,7 +347,7 @@ impl Komment {
             discussion.title, discussion.body_html
         );
 
-        for comment in discussion.comments.nodes {
+        for comment in &discussion.comments.nodes {
             let is_author = viewer_login == Some(&comment.author.login);
             
             html.push_str(&format!(
@@ -395,8 +395,11 @@ impl Komment {
         html.push_str("</div>");
 
         if self.config.token.is_some() {
-            html.push_str(r#"
-                <div class="komment-editor">
+            let has_comments = !discussion.comments.nodes.is_empty();
+            let editor_style = if has_comments { "" } else { "border-top: none; padding-top: 0; margin-top: 0;" };
+            
+            html.push_str(&format!(
+                r#"<div class="komment-editor" style="{editor_style}">
                     <textarea id="komment-textarea" placeholder="Leave a comment..."></textarea>
                     <div style="display:flex; gap:10px;">
                         <button id="logout-btn-inline" class="komment-logout-btn">
@@ -405,8 +408,9 @@ impl Komment {
                         </button>
                         <button id="komment-submit">Post Comment</button>
                     </div>
-                </div>
-            "#);
+                </div>"#,
+                editor_style = editor_style
+            ));
         }
 
         html.push_str("</div>");
