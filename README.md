@@ -27,11 +27,11 @@ To use `komment` on any website, simply add the following:
   // Load the script
   import "https://komment.s42.workers.dev/komment-embed.js";
   
-  // Initialize with your repo and optional config
+  // Initialize with your repo and config
   komment('your-username/your-repo', {
-    // Optional: Only needed if you are hosting your own worker or using a custom GitHub App
-    // workerUrl: 'https://your-worker.workers.dev',
-    // clientId: 'your-github-client-id'
+    clientId: 'your-github-client-id', // Required
+    // Optional: Only needed if your worker is on a different domain than the script
+    // workerUrl: 'https://your-worker.workers.dev'
   });
 </script>
 ```

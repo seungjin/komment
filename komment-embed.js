@@ -126,12 +126,18 @@ async function sleep(ms) {
 }
 
 window.komment = async function(repo, config = {}) {
-    const workerUrl = config.workerUrl || "https://komment.s42.workers.dev";
-    const clientId = config.clientId || "Iv23liQokIChd3ylSI7R";
+    // Derive workerUrl from script location if not provided
+    const workerUrl = config.workerUrl || new URL(SCRIPT_URL).origin;
+    const clientId = config.clientId;
 
     const container = document.querySelector('.komment');
     if (!container) {
         console.error("Komment: <div class='komment'></div> not found.");
+        return;
+    }
+
+    if (!clientId) {
+        container.innerHTML = `<div class="error">Error: 'clientId' is required. Please provide it in the komment() configuration.</div>`;
         return;
     }
 
