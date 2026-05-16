@@ -2,9 +2,71 @@ import init, { Komment } from "/pkg/komment.js";
 
 const WORKER_URL = "https://komment.s42.workers.dev";
 
-// Inject styles for the spinner
+// Inject styles for the spinner and the widget
 const style = document.createElement('style');
 style.innerHTML = `
+    :root {
+        --komment-color-btn-bg: #2da44e;
+        --komment-color-btn-hover: #2c974b;
+        --komment-color-btn-active: #298e46;
+        --komment-color-border: #d0d7de;
+        --komment-color-bg-subtle: #f6f8fa;
+        --komment-color-danger: #cf222e;
+        --komment-color-danger-bg: #ffebe9;
+        --komment-shadow-sm: 0 1px 0 rgba(27, 31, 36, 0.1);
+    }
+
+    .komment {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        line-height: 1.5;
+        color: #24292f;
+    }
+
+    /* Discussion & Comments */
+    .komment-comment { border: 1px solid var(--komment-color-border); border-radius: 6px; margin: 16px 0; overflow: hidden; }
+    .komment-comment-header { background-color: var(--komment-color-bg-subtle); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--komment-color-border); font-size: 12px; color: #57606a; }
+    .komment-comment-body { padding: 16px; }
+    .komment-body { margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .komment-comment img { border-radius: 50%; }
+    .komment-comment pre { background: var(--komment-color-bg-subtle); padding: 16px; overflow: auto; border-radius: 6px; }
+
+    /* Buttons - Modern Style */
+    .komment button, .komment .create-btn {
+        font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 6px;
+        transition: all 0.2s cubic-bezier(0.3, 0, 0.5, 1); user-select: none; display: inline-flex;
+        align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(27, 31, 36, 0.15);
+    }
+
+    /* Primary (Green) */
+    #komment-submit, #login-btn, .komment .create-btn, .komment-save-btn { 
+        background-color: var(--komment-color-btn-bg); color: #ffffff; padding: 8px 20px; box-shadow: var(--komment-shadow-sm);
+    }
+    #komment-submit:hover, #login-btn:hover, .komment .create-btn:hover, .komment-save-btn:hover { background-color: var(--komment-color-btn-hover); }
+    #komment-submit:active, #login-btn:active, .komment .create-btn:active, .komment-save-btn:active { background-color: var(--komment-color-btn-active); transform: translateY(1px); }
+    #komment-submit:disabled { background-color: #94d3a2; border-color: rgba(27, 31, 36, 0.1); cursor: not-allowed; }
+
+    /* Secondary (Gray/Outline) */
+    .komment-logout-btn, .komment-cancel-btn {
+        background-color: var(--komment-color-bg-subtle); color: #57606a; padding: 6px 14px; font-size: 13px;
+        border: 1px solid var(--komment-color-border); box-shadow: var(--komment-shadow-sm);
+    }
+    .komment-logout-btn:hover { color: var(--komment-color-danger); background-color: var(--komment-color-danger-bg); border-color: rgba(207, 34, 46, 0.15); }
+    .komment-logout-btn:active { background-color: #f0f0f0; transform: translateY(1px); }
+
+    /* Alerts & States */
+    .komment .error { color: var(--komment-color-danger); background: var(--komment-color-danger-bg); padding: 12px; border-radius: 6px; margin-top: 20px; border: 1px solid rgba(207, 34, 46, 0.15); }
+    .komment .info { background: var(--komment-color-bg-subtle); padding: 32px; border-radius: 6px; border: 1px solid var(--komment-color-border); text-align: center; }
+    
+    /* Editor */
+    .komment-editor { margin-top: 32px; border-top: 1px solid var(--komment-color-border); padding-top: 32px; }
+    #komment-textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--komment-color-border); border-radius: 6px; margin-bottom: 12px; font-family: inherit; box-sizing: border-box; font-size: 14px; }
+    #komment-textarea:focus { outline: none; border-color: #0969da; box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3); }
+
+    .komment-actions { display: flex; gap: 8px; }
+    .komment-edit-btn, .komment-delete-btn { background: none; border: none; color: #0969da; cursor: pointer; padding: 0; font-size: 12px; font-weight: 500; }
+    .komment-edit-btn:hover, .komment-delete-btn:hover { text-decoration: underline; }
+    .komment-delete-btn { color: var(--komment-color-danger); }
+
     .komment-loading-container {
         display: flex;
         flex-direction: column;
