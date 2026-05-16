@@ -242,7 +242,9 @@ window.komment = async function(repo) {
 
         // Delegate Edit/Delete/Save/Cancel
         container.onclick = async (e) => {
-            const btn = e.target;
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            
             const id = btn.getAttribute("data-id");
             if (!id) return;
 
