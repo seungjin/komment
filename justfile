@@ -7,6 +7,7 @@ build:
 	cp index.html public/
 	cp foo.html public/foo/foo.html
 	cp komment-embed.js public/
+	cp _headers public/
 	cp -r pkg public/
 
 # Run the project locally
