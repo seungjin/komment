@@ -72,7 +72,7 @@ window.komment = async function(repo) {
     loginBtn.style.display = 'none';
 
     let instance;
-    const term = `komment: ${window.location.origin}${window.location.pathname}`;
+    const term = `komment: ${window.location.host}${window.location.pathname}`;
 
     async function handleOAuth() {
         const params = new URLSearchParams(window.location.search);
