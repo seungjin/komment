@@ -1,7 +1,5 @@
 import init, { Komment } from "./pkg/komment.js";
 
-const WORKER_URL = "https://komment.s42.workers.dev";
-const CLIENT_ID = "Iv23liQokIChd3ylSI7R";
 const SCRIPT_URL = import.meta.url;
 const PKG_URL = new URL("./pkg/komment_bg.wasm", SCRIPT_URL).href;
 
@@ -127,7 +125,10 @@ async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-window.komment = async function(repo) {
+window.komment = async function(repo, config = {}) {
+    const workerUrl = config.workerUrl || "https://komment.s42.workers.dev";
+    const clientId = config.clientId || "Iv23liQokIChd3ylSI7R";
+
     const container = document.querySelector('.komment');
     if (!container) {
         console.error("Komment: <div class='komment'></div> not found.");
@@ -149,7 +150,7 @@ window.komment = async function(repo) {
         const code = params.get("code");
         if (code) {
             try {
-                const res = await fetch(`${WORKER_URL}/api/token`, {
+                const res = await fetch(`${workerUrl}/api/token`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ code })
@@ -284,8 +285,8 @@ window.komment = async function(repo) {
 
     loginBtn.onclick = () => {
         const currentUrl = window.location.origin + window.location.pathname;
-        const callbackUrl = `${WORKER_URL}/api/auth/callback`;
-        window.location.href = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=public_repo&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${encodeURIComponent(currentUrl)}`;
+        const callbackUrl = `${workerUrl}/api/auth/callback`;
+        window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=public_repo&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${encodeURIComponent(currentUrl)}`;
     };
 
     instance = new Komment({
@@ -293,7 +294,7 @@ window.komment = async function(repo) {
         mapping: "title",
         term: term,
         token: token,
-        api_url: `${WORKER_URL}/api/graphql`,
+        api_url: `${workerUrl}/api/graphql`,
         category: "General"
     });
 

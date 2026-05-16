@@ -24,9 +24,15 @@ To use `komment` on any website, simply add the following:
 
 <!-- 2. Load and Initialize -->
 <script type="module">
-  // Change the URL to your own deployment or CDN
+  // Load the script
   import "https://komment.s42.workers.dev/komment-embed.js";
-  komment('your-username/your-repo');
+  
+  // Initialize with your repo and optional config
+  komment('your-username/your-repo', {
+    // Optional: Only needed if you are hosting your own worker or using a custom GitHub App
+    // workerUrl: 'https://your-worker.workers.dev',
+    // clientId: 'your-github-client-id'
+  });
 </script>
 ```
 

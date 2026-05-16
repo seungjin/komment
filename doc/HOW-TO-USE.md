@@ -22,10 +22,14 @@ You need a GitHub App to handle user logins securely.
 - Click **Generate a new client secret** and copy it.
 
 ## 3. Configure the Widget
-Update the configuration in the source code before deploying.
-- Open `komment-embed.js`.
-- Set `const CLIENT_ID = "your-client-id";` (Inside the `loginBtn.onclick` handler).
-- Set `const WORKER_URL = "https://your-worker.workers.dev";`.
+You don't need to modify the `komment-embed.js` source code. Instead, you pass your configuration when you initialize the widget on your page:
+
+```javascript
+komment('your-username/your-repo', {
+  workerUrl: 'https://your-worker.workers.dev',
+  clientId: 'your-github-client-id'
+});
+```
 
 ## 4. Deploy
 Deploy the entire stack to Cloudflare.
