@@ -24,14 +24,12 @@ To use `komment` on any website, simply add the following:
 
 <!-- 2. Load and Initialize -->
 <script type="module">
-  // Load the script
-  import "https://komment.s42.workers.dev/komment-embed.js";
+  // Load the script from your deployed worker
+  import "https://your-worker.workers.dev/komment-embed.js";
   
   // Initialize with your repo and config
   komment('your-username/your-repo', {
-    clientId: 'your-github-client-id', // Required
-    // Optional: Only needed if your worker is on a different domain than the script
-    // workerUrl: 'https://your-worker.workers.dev'
+    clientId: 'your-github-client-id' // From your GitHub App
   });
 </script>
 ```
@@ -43,6 +41,7 @@ To use `komment` on any website, simply add the following:
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) v0.15.0+
 - [worker-build](https://github.com/cloudflare/workers-rs) (`cargo install worker-build`)
 - [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+- [Just](https://github.com/casey/just) (optional, but recommended for build commands)
 
 ### 1. Build and Deploy
 The project uses a `justfile` for easy management.
@@ -55,13 +54,14 @@ just deploy
 ### 2. Configure GitHub App
 1. Create a [GitHub App](https://github.com/settings/apps/new).
 2. Set **Callback URL** to your worker's callback endpoint:
-   `https://komment.your-name.workers.dev/api/auth/callback`
-3. Under **Permissions**, set **Discussions** to `Read & write`.
+   `https://your-worker.workers.dev/api/auth/callback`
+3. Under **Permissions**, set **Repository permissions** -> **Discussions** to `Read & write`.
 4. Enable **Discussions** in your target repository settings.
 
 ### 3. Set Secrets
 Run these in the `worker/` directory:
 ```bash
+cd worker
 npx wrangler secret put GITHUB_CLIENT_ID
 npx wrangler secret put GITHUB_CLIENT_SECRET
 ```
@@ -71,6 +71,7 @@ npx wrangler secret put GITHUB_CLIENT_SECRET
 - [**HOW-TO-USE.md**](./doc/HOW-TO-USE.md): Step-by-step setup guide.
 - [**DESIGN.md**](./doc/DESIGN.md): Internal architecture and design decisions.
 - [**CLOUDFLARE.md**](./doc/CLOUDFLARE.md): Worker-specific deployment details.
+- [**SECURITY.md**](./doc/SECURITY.md): Details on how secrets and tokens are handled.
 
 ## License
 

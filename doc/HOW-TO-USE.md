@@ -27,7 +27,7 @@ Komment is designed to run on a Cloudflare Worker with static assets.
 # 1. From the project root, build and deploy
 just deploy
 
-# 2. Set your GitHub App secrets
+# 2. Set your GitHub App secrets in the worker directory
 cd worker
 npx wrangler secret put GITHUB_CLIENT_ID
 npx wrangler secret put GITHUB_CLIENT_SECRET
@@ -43,15 +43,17 @@ Crucially, you must install the app on the repository where you want comments to
 You can now embed the widget on any page. You don't need to host the script on the same server; you can load it directly from your Cloudflare Worker or any CDN where you've copied the `public/` files.
 
 ```html
+<!-- 1. The container -->
 <div class="komment"></div>
 
+<!-- 2. Load and Initialize -->
 <script type="module">
-  // 1. Load the script (from your worker or CDN)
+  // Load the script (from your worker or CDN)
   import "https://your-worker.workers.dev/komment-embed.js";
   
-  // 2. Initialize
+  // Initialize
   komment('your-username/your-repo', {
-    clientId: 'your-github-client-id' // Required
+    clientId: 'your-github-client-id' // From your GitHub App
   });
 </script>
 ```
@@ -65,6 +67,7 @@ Simply visit your website while logged in with GitHub. Komment will:
 ---
 
 ### Pro-Tips & Troubleshooting
-- **CORS**: The widget automatically includes a `_headers` file to allow cross-origin script loading.
-- **Worker URL**: If your script is on a different domain than your worker, the widget automatically detects the correct worker URL from the script's source.
+- **CORS**: The widget automatically includes a `_headers` file in the `public/` directory to allow cross-origin script loading.
+- **Worker URL**: The `komment-embed.js` script automatically detects your worker URL based on its own source. If you host the script on a CDN separate from your worker, you can manually specify `workerUrl` in the config.
 - **Icons**: Action buttons (Edit/Delete) use SVG icons and will automatically adapt to your site's theme.
+- **Styling**: All CSS is bundled in `komment-embed.js` and injected into the document head automatically.
