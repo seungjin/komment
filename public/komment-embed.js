@@ -196,6 +196,9 @@ window.komment = async function(repo, config = {}) {
                     await autoCreate();
                 }
             } else if (e === "DISCUSSION_NOT_FOUND" || e.toString().includes("401")) {
+                if (e.toString().includes("401")) {
+                    localStorage.removeItem("gh_token");
+                }
                 container.innerHTML = `<div class="info">
                     <p>Please login with GitHub to view or post comments.</p>
                     <div class="komment-login-container" id="komment-login-placeholder"></div>

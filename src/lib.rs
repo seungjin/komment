@@ -246,7 +246,18 @@ impl Komment {
         let resp: Response = resp_value.dyn_into()?;
 
         if !resp.ok() {
-            return Err(JsValue::from_str(&format!("HTTP error: {}", resp.status())));
+            let status = resp.status();
+            let body_text = JsFuture::from(resp.text()?).await?;
+            let body_str = body_text.as_string().unwrap_or_default();
+            
+            // Try to parse GitHub's REST-style error JSON
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body_str) {
+                if let Some(msg) = json["message"].as_str() {
+                    return Err(JsValue::from_str(&format!("GitHub API Error ({}): {}", status, msg)));
+                }
+            }
+            
+            return Err(JsValue::from_str(&format!("GitHub API Error: {} {}", status, body_str)));
         }
 
         let json_value = JsFuture::from(resp.json()?).await?;

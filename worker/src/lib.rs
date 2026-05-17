@@ -63,7 +63,13 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                 .await
                 .map_err(|e| worker::Error::from(e.to_string()))?;
 
+            let status = res.status();
             let body = res.text().await.map_err(|e| worker::Error::from(e.to_string()))?;
+            
+            if !status.is_success() {
+                return Response::error(body, status.as_u16());
+            }
+            
             Response::ok(body)
         })
         .post_async("/api/graphql", |mut req, _ctx| async move {
@@ -83,7 +89,13 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                 .await
                 .map_err(|e| worker::Error::from(e.to_string()))?;
 
+            let status = res.status();
             let body = res.text().await.map_err(|e| worker::Error::from(e.to_string()))?;
+            
+            if !status.is_success() {
+                return Response::error(body, status.as_u16());
+            }
+
             Response::ok(body)
         })
         .run(req, env)
