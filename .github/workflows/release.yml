@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM and assets
+        run: |
+          wasm-pack build --target web
+          mkdir -p public
+          cp index.html public/
+          cp komment-embed.js public/
+          cp _headers public/
+          cp -r pkg public/
+
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Prepare assets
+        run: |
+          cd public && zip -r ../komment-v${{ steps.get_version.outputs.VERSION }}.zip .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            komment-v${{ steps.get_version.outputs.VERSION }}.zip
+            public/komment-embed.js
+            public/index.html
+            public/pkg/komment_bg.wasm
+            public/pkg/komment.js
+          name: Release v${{ steps.get_version.outputs.VERSION }}
+          generate_release_notes: true
