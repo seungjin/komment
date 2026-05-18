@@ -1,0 +1,22 @@
+{
+  "name": "komment",
+  "type": "module",
+  "collaborators": [
+    "Seungjin Kim"
+  ],
+  "description": "A proof-of-concept commenting system powered by GitHub Discussions, implemented in Rust and compiled to WebAssembly (WASM).",
+  "version": "0.1.0",
+  "license": "MIT OR Apache-2.0",
+  "files": [
+    "komment_bg.wasm",
+    "komment.js",
+    "komment.d.ts",
+    "LICENSE-APACHE",
+    "LICENSE-MIT"
+  ],
+  "main": "komment.js",
+  "types": "komment.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
