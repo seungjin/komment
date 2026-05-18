@@ -1,7 +1,7 @@
 /target/
 /worker/target/
 /pkg/
-/public/pkg/
+#/public/pkg/
 /worker/node_modules/
 node_modules/
 
