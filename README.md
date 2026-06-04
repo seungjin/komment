@@ -2,11 +2,12 @@
 
 A high-performance commenting system powered by **Rust**, **WebAssembly (WASM)**, and **GitHub Discussions**.
 
-Komment provides a secure, fast, and modern way to add discussions to your website without managing a database. It mirrors the core functionality of [giscus](https://giscus.app) but is built entirely with Rust on both the client and the server.
+Komment provides a secure, fast, and modern way to add discussions to your website without managing a database. It mirrors the core functionality of [giscus](https://giscus.app) but is built entirely with Rust—leveraging WebAssembly (WASM) both on the client and as a serverless **Function-as-a-Service (FaaS)** on Cloudflare Workers.
 
 ## Features
 
-- **Blazing Fast**: Powered by Rust compiled to WASM.
+- **Blazing Fast**: Powered by Rust compiled to WASM on both ends.
+- **Serverless Backend**: Runs on Cloudflare Workers, providing high availability and low latency without a traditional server.
 - **No Database**: Uses GitHub Discussions as the data store.
 - **Zero-Config Styling**: All CSS is bundled in the script; just add the container.
 - **Portable Script**: Load `komment-embed.js` from any domain or CDN.
@@ -40,7 +41,7 @@ To use `komment` on any website, simply add the following:
 - [Rust](https://www.rust-lang.org/tools/install) (2024 edition)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) v0.15.0+
 - [worker-build](https://github.com/cloudflare/workers-rs) (`cargo install worker-build`)
-- [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+- [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/): The essential tool for managing, testing, and deploying the serverless worker.
 - [Just](https://github.com/casey/just) (optional, but recommended for build commands)
 
 ### 1. Build and Deploy
