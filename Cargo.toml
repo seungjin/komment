@@ -1,6 +1,6 @@
 [package]
 name = "komment"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Seungjin Kim"]
 description = "A proof-of-concept commenting system powered by GitHub Discussions, implemented in Rust and compiled to WebAssembly (WASM)."
@@ -13,20 +13,20 @@ crate-type = ["cdylib", "rlib"]
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
-    "Window",
-    "Document",
-    "Element",
-    "HtmlElement",
-    "Node",
-    "Response",
-    "Request",
-    "RequestInit",
-    "RequestMode",
-    "Headers",
-    "console",
-    "ShadowRoot",
-    "HtmlTemplateElement",
-    "DocumentFragment",
+  "Window",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "Node",
+  "Response",
+  "Request",
+  "RequestInit",
+  "RequestMode",
+  "Headers",
+  "console",
+  "ShadowRoot",
+  "HtmlTemplateElement",
+  "DocumentFragment",
 ] }
 js-sys = "0.3"
 serde = { version = "1.0", features = ["derive"] }
