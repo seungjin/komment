@@ -1,10 +1,14 @@
 set shell := ["bash", "-c"]
 
+# Extract version from Cargo.toml
+version := `grep '^version =' Cargo.toml | cut -d '"' -f 2`
+
 # Build the WASM package and prepare assets
 build:
     wasm-pack build --target web
+    mkdir -p public
     cp index.html public/
-    cp komment-embed.js public/
+    sed "s/__VERSION__/v{{version}}/g" komment-embed.js > public/komment-embed.js
     cp _headers public/
     cp -r pkg public/
 

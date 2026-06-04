@@ -130,7 +130,7 @@ document.head.appendChild(style);
 
 const BRANDING_HTML = `
     <div class="komment-branding">
-        powered by <a href="https://github.com/seungjin/komment" target="_blank">Komment</a> v0.1.0
+        powered by <a href="https://github.com/seungjin/komment" target="_blank">Komment</a> __VERSION__
     </div>
 `;
 

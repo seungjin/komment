@@ -22,9 +22,11 @@ You need a GitHub App to handle user logins securely.
 - Click **Generate a new client secret** and copy it.
 
 ## 3. Deploy to Cloudflare
-Komment is designed to run on a Cloudflare Worker with static assets.
+Komment is designed to run on a Cloudflare Worker with static assets. The project uses a `justfile` to automate the build process, including dynamically injecting the version number from `Cargo.toml`.
+
 ```bash
 # 1. From the project root, build and deploy
+# This automatically extracts the version and prepares the public/ folder
 just deploy
 
 # 2. Set your GitHub App secrets in the worker directory

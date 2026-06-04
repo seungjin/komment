@@ -34,10 +34,18 @@ This command builds the WASM package, syncs assets to `public/`, and deploys the
    ```
 
 2. **Sync Public Assets**:
-   Ensure `public/` contains `index.html`, `komment-embed.js`, and the `pkg/` folder.
+   The `komment-embed.js` file in the root contains a `__VERSION__` placeholder that must be replaced with the version from `Cargo.toml` during the build process.
+
    ```bash
+   # Extract version from Cargo.toml
+   VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f 2)
+
+   # Create public directory
    mkdir -p public
-   cp index.html komment-embed.js _headers public/
+
+   # Copy static files and inject version
+   cp index.html _headers public/
+   sed "s/__VERSION__/v$VERSION/g" komment-embed.js > public/komment-embed.js
    cp -r pkg public/
    ```
 

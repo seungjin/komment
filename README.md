@@ -45,10 +45,10 @@ To use `komment` on any website, simply add the following:
 - [Just](https://github.com/casey/just) (optional, but recommended for build commands)
 
 ### 1. Build and Deploy
-The project uses a `justfile` for easy management.
+The project uses a `justfile` for easy management. This automatically extracts the version from `Cargo.toml` and injects it into the frontend script.
 
 ```bash
-# Rebuild WASM and deploy everything to Cloudflare
+# Rebuild WASM, prepare assets with versioning, and deploy
 just deploy
 ```
 
