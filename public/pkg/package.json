@@ -5,7 +5,7 @@
     "Seungjin Kim"
   ],
   "description": "A proof-of-concept commenting system powered by GitHub Discussions, implemented in Rust and compiled to WebAssembly (WASM).",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT OR Apache-2.0",
   "files": [
     "komment_bg.wasm",
